@@ -116,7 +116,7 @@ export default class DisplaySettingsExtension extends Extension {
 
     _notify(title, body) {
         if (!this._source) {
-            this._source = new MessageTray.Source({ title: 'Display settings', iconName: 'video-display-symbolic' })
+            this._source = new MessageTray.Source({ title: 'Display settings', iconName: 'display-brightness-symbolic' })
             this._source.connect('destroy', () => {
                 this._source = null
             })

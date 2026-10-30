@@ -1,4 +1,4 @@
-// The "Display settings" Quick Settings tile: brightness sliders for the
+// The "Displays" Quick Settings tile: brightness sliders for the
 // built-in and external displays, the dark style switch, and saving and
 // restoring them per desk. Settings that differ from the saved desk setup
 // show a yellow mark at their saved value.
@@ -14,8 +14,8 @@ import { Slider } from 'resource:///org/gnome/shell/ui/slider.js'
 
 import { deskKey, diffProfile, loadProfile, saveProfile } from './profile.js'
 
-const TITLE = 'Display settings'
-const ICON = 'video-display-symbolic'
+const TITLE = 'Displays'
+const ICON = 'display-brightness-symbolic'
 const DARK = 'prefer-dark'
 const LIGHT = 'default'
 
@@ -115,6 +115,8 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._darkItem.insert_child_at_index(this._darkDot, 0)
         this._darkSaved = new St.Label({ style_class: 'ds-saved-label', y_align: Clutter.ActorAlign.CENTER, visible: false })
         this._darkItem.insert_child_above(this._darkSaved, this._darkItem.label)
+        // No hover highlight; clicking the row still toggles
+        this._darkItem.track_hover = false
         // Toggling would otherwise close the menu, as activating any item does
         this._darkItem.activate = () => this._darkItem.toggle()
         this._darkItem.connect('toggled', (_item, dark) => this._settings.set_string('color-scheme', dark ? DARK : LIGHT))
