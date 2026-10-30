@@ -118,14 +118,17 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._darkItem.connect('toggled', (_item, dark) => this._settings.set_string('color-scheme', dark ? DARK : LIGHT))
         this.menu.addMenuItem(this._darkItem)
 
-        const buttons = new PopupMenu.PopupBaseMenuItem({ activate: false, can_focus: false, style_class: 'ds-buttons' })
+        // A plain box rather than a menu item, so the row has no hover highlight
+        const buttonsSection = new PopupMenu.PopupMenuSection()
+        const buttons = new St.BoxLayout({ style_class: 'ds-buttons', x_expand: true })
+        buttonsSection.actor.add_child(buttons)
         this._saveButton = new St.Button({ label: 'Save desk setup', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._restoreButton = new St.Button({ label: 'Restore', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._saveButton.connect('clicked', () => this.save().catch(error => logError(error, '[display-settings] Save failed')))
         this._restoreButton.connect('clicked', () => this.restore().catch(error => logError(error, '[display-settings] Restore failed')))
         buttons.add_child(this._saveButton)
         buttons.add_child(this._restoreButton)
-        this.menu.addMenuItem(buttons)
+        this.menu.addMenuItem(buttonsSection)
 
         this.connect('clicked', () => this.menu.open())
         this.menu.connect('open-state-changed', (_menu, open) => {

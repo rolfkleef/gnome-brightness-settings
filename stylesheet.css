@@ -3,6 +3,10 @@
 .ds-saved-mark { width: 3px; height: 16px; border-radius: 1px; background-color: #f6d32d; }
 .ds-dot { width: 7px; height: 7px; border-radius: 4px; background-color: #f6d32d; margin-right: 6px; }
 .ds-saved-label { color: #aaa; font-size: 0.9em; margin-left: 6px; }
-.ds-buttons { spacing: 8px; }
-.ds-button { padding: 6px 10px; }
+.ds-buttons { spacing: 8px; padding: 6px 12px 2px; }
+.ds-button { padding: 8px 12px; border-radius: 12px; background-color: rgba(255, 255, 255, 0.1); }
+.ds-button:hover { background-color: rgba(255, 255, 255, 0.17); }
+.ds-button:active { background-color: rgba(255, 255, 255, 0.24); }
+.ds-button:insensitive { color: rgba(255, 255, 255, 0.4); background-color: rgba(255, 255, 255, 0.05); }
 .ds-restore-active { background-color: #f6d32d; color: #222; font-weight: bold; }
+.ds-restore-active:hover { background-color: #f8e45c; }
