@@ -13,7 +13,6 @@
 ## Global Constraints
 
 - UUID `display-settings@drostan.org`; `shell-version: ["50"]`.
-- Source in `/home/rolf/dev/tools/gnome-display-settings/` (git repo), symlinked to `~/.local/share/gnome-shell/extensions/display-settings@drostan.org`.
 - Tile and menu header title: `Display settings`. Notification: title `Restore display settings?`, action `Restore`. Buttons: `Save desk setup`, `Restore` / `Restore (N)`.
 - Brightness VCP code `0x10`. Profiles: `~/.config/display-settings/desk-<key>.json`.
 - Style values: `prefer-dark` (switch on) / `default` (switch off), key `org.gnome.desktop.interface color-scheme`.
