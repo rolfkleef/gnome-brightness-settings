@@ -46,7 +46,8 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
             visible: false,
         })
         track.add_child(this._mark)
-        track.connect('notify::allocation', () => this._placeMark())
+        // The track is allocated before the slider, so follow the slider itself
+        this._slider.connect('notify::allocation', () => this._placeMark())
         this.add_child(track)
 
         this._valueLabel = new St.Label({ style_class: 'ds-value', y_align: Clutter.ActorAlign.CENTER })
@@ -77,10 +78,15 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
         if (this._savedFraction === null)
             return
 
+        if (!this._slider.has_allocation())
+            return
+
         // The handle's centre travels between one radius from either end
-        const width = this._slider.width
+        const width = this._slider.allocation.get_width()
         const radius = this._slider.get_theme_node().get_length('-slider-handle-radius')
-        this._mark.translation_x = radius + this._savedFraction * (width - 2 * radius) - this._mark.width / 2
+        const markWidth = this._mark.get_theme_node().get_width()
+        const centre = radius + this._savedFraction * (width - 2 * radius)
+        this._mark.translation_x = Math.clamp(centre - markWidth / 2, 0, width - markWidth)
     }
 
     _updateLabel() {
