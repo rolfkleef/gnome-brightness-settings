@@ -3,7 +3,7 @@ import GLib from 'gi://GLib'
 const tmp = GLib.dir_make_tmp('display-settings-XXXXXX')
 GLib.setenv('XDG_CONFIG_HOME', tmp, true)
 
-const { deskKey, diffProfile, loadProfile, saveProfile } = await import('../profile.js')
+const { deskKey, diffProfile, loadProfile, saveProfile } = await import('../../extension/profile.js')
 
 function assert(condition, message) {
     if (!condition)

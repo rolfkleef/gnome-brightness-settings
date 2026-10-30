@@ -1,4 +1,4 @@
-import { CoalescingWriter } from '../writer.js'
+import { CoalescingWriter } from '../../extension/writer.js'
 
 function assert(condition, message) {
     if (!condition)
