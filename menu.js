@@ -41,6 +41,8 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
 
         this._mark = new St.Widget({
             style_class: 'ds-saved-mark',
+            // Without expanding, BinLayout centres the mark and ignores START
+            x_expand: true,
             x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.CENTER,
             visible: false,
