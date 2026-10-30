@@ -115,6 +115,8 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._darkItem.insert_child_at_index(this._darkDot, 0)
         this._darkSaved = new St.Label({ style_class: 'ds-saved-label', y_align: Clutter.ActorAlign.CENTER, visible: false })
         this._darkItem.insert_child_above(this._darkSaved, this._darkItem.label)
+        // Toggling would otherwise close the menu, as activating any item does
+        this._darkItem.activate = () => this._darkItem.toggle()
         this._darkItem.connect('toggled', (_item, dark) => this._settings.set_string('color-scheme', dark ? DARK : LIGHT))
         this.menu.addMenuItem(this._darkItem)
 
