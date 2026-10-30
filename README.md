@@ -45,3 +45,6 @@ Profiles live in `~/.config/display-settings/desk-<key>.json`.
   restores twice. Make it insensitive during the restore.
 - `menu.js` and `extension.js` still log each restore (`[display-settings]
   Restore …`), added for debugging; remove once restore is trusted.
+
+## License
+GPL-2.0-or-later, see `COPYING`.

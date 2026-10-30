@@ -2,6 +2,9 @@
   "uuid": "display-settings@drostan.org",
   "name": "Display Settings",
   "description": "Brightness for the built-in and external displays, dark style, and per-desk save and restore.",
-  "shell-version": ["50"],
-  "version": 1
+  "shell-version": [
+    "50"
+  ],
+  "version": 1,
+  "url": "https://github.com/rolfkleef/gnome-display-settings"
 }
