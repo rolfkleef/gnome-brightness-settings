@@ -21,12 +21,12 @@ export function deskKey(edids) {
 }
 
 /**
- * Profile and state: `{style, builtin, external: {edid: value}}`, with
+ * Profile and state: `{style, nightLight, builtin, external: {edid: value}}`, with
  * `builtin` relative (0–1) or null. Only settings the profile holds count.
  */
 export function diffProfile(profile, state) {
     const diff = {
-        count: 0, builtin: false, style: false, external: new Set(),
+        count: 0, builtin: false, style: false, nightLight: false, external: new Set(),
         // Displays connected but not in the profile: nothing to restore, but worth saving
         unsaved: new Set(), builtinUnsaved: false,
         saveNeeded: true,
@@ -41,6 +41,11 @@ export function diffProfile(profile, state) {
 
     diff.builtinUnsaved = profile.builtin === null && state.builtin !== null
 
+    // Profiles saved before night light was part of the setup don't hold it
+    const savedNightLight = 'nightLight' in profile
+    diff.nightLight = savedNightLight && profile.nightLight !== state.nightLight
+    const nightLightUnsaved = !savedNightLight && state.nightLight !== undefined
+
     for (const [edid, value] of Object.entries(state.external)) {
         if (!(edid in profile.external))
             diff.unsaved.add(edid)
@@ -48,8 +53,8 @@ export function diffProfile(profile, state) {
             diff.external.add(edid)
     }
 
-    diff.count = diff.style + diff.builtin + diff.external.size
-    diff.saveNeeded = diff.count > 0 || diff.unsaved.size > 0 || diff.builtinUnsaved
+    diff.count = diff.style + diff.nightLight + diff.builtin + diff.external.size
+    diff.saveNeeded = diff.count > 0 || diff.unsaved.size > 0 || diff.builtinUnsaved || nightLightUnsaved
 
     return diff
 }

@@ -41,6 +41,15 @@ assert(!diffProfile(base, state({})).saveNeeded, 'equal state needs no saving')
 assert(diffProfile(null, base).saveNeeded, 'no profile needs saving')
 assert(diffProfile(base, state({ builtin: 0.9 })).saveNeeded, 'a difference needs saving')
 
+// Night light: compared like style; profiles saved before it existed don't hold it
+const withNight = { ...base, nightLight: false }
+const night = changes => ({ ...state(changes), nightLight: changes.nightLight ?? false })
+assert(!diffProfile(withNight, night({})).nightLight, 'night light equal')
+const nightDiff = diffProfile(withNight, night({ nightLight: true }))
+assert(nightDiff.nightLight && nightDiff.count === 1, 'night light differs')
+const oldProfile = diffProfile(base, night({ nightLight: true }))
+assert(!oldProfile.nightLight && oldProfile.count === 0 && oldProfile.saveNeeded, 'old profile: not compared, save offered')
+
 assert(await loadProfile('missing') === null, 'missing profile is null')
 await saveProfile('k1', base)
 const loaded = await loadProfile('k1')

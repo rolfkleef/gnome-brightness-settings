@@ -1,15 +1,15 @@
 # Display Settings (GNOME Shell extension)
 
 A "Displays" tile in Quick Settings with brightness sliders for the built-in
-screen and external monitors (DDC/CI), a Dark Style switch, and per-desk
-save and restore. It replaces GNOME's own brightness slider and Dark Style
-toggle while enabled.
+screen and external monitors (DDC/CI), Dark Style and Night Light switches, and per-desk
+save and restore. It replaces GNOME's own brightness slider, Dark Style and Night Light
+toggles while enabled.
 
-- **Save this setup** stores brightness of every display and the style for the
+- **Save this setup** stores brightness of every display, the style and Night Light for the
   current desk (the set of connected external monitors). Enabled only when
   something differs from the saved setup.
 - Settings that differ from the saved setup show a yellow mark at the saved
-  slider position (or a yellow dot with "saved: on/off" for Dark Style);
+  slider position (or a yellow dot with "saved: on/off" for the switches);
   displays not in the saved setup get a yellow dot before their name.
 - **Restore (N)** applies the saved setup. When monitors are plugged in or
   unplugged and the new desk's saved setup differs, a "Restore display

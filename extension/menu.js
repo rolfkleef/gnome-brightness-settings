@@ -4,6 +4,7 @@
 // show a yellow mark at their saved value.
 
 import Clutter from 'gi://Clutter'
+import Gio from 'gi://Gio'
 import GObject from 'gi://GObject'
 import St from 'gi://St'
 
@@ -120,6 +121,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._ddc = ddc
         this._builtin = builtin
         this._settings = settings
+        this._colorSettings = new Gio.Settings({ schema_id: 'org.gnome.settings-daemon.plugins.color' })
 
         this._monitors = []      // [{edid, name, max}] answering DDC
         this._external = {}      // edid → raw brightness
@@ -134,17 +136,10 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this.menu.addMenuItem(this._slidersSection)
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem())
 
-        this._darkItem = new PopupMenu.PopupSwitchMenuItem('Dark Style', false)
-        this._darkDot = new St.Widget({ style_class: 'ds-dot', y_align: Clutter.ActorAlign.CENTER, visible: false })
-        this._darkItem.insert_child_at_index(this._darkDot, 0)
-        this._darkSaved = new St.Label({ style_class: 'ds-saved-label', y_align: Clutter.ActorAlign.CENTER, visible: false })
-        this._darkItem.insert_child_above(this._darkSaved, this._darkItem.label)
-        // No hover highlight; clicking the row still toggles
-        this._darkItem.track_hover = false
-        // Toggling would otherwise close the menu, as activating any item does
-        this._darkItem.activate = () => this._darkItem.toggle()
-        this._darkItem.connect('toggled', (_item, dark) => this._settings.set_string('color-scheme', dark ? DARK : LIGHT))
-        this.menu.addMenuItem(this._darkItem)
+        this._darkItem = this._addSwitch('Dark Style',
+            dark => this._settings.set_string('color-scheme', dark ? DARK : LIGHT))
+        this._nightItem = this._addSwitch('Night Light',
+            enabled => this._colorSettings.set_boolean('night-light-enabled', enabled))
 
         // A plain box rather than a menu item, so the row has no hover highlight
         const buttonsSection = new PopupMenu.PopupMenuSection()
@@ -166,6 +161,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
 
         this._builtin.connectObject('changed', () => this._onBuiltinChanged(), this)
         this._settings.connectObject('changed::color-scheme', () => this._updateDiff(), this)
+        this._colorSettings.connectObject('changed::night-light-enabled', () => this._updateDiff(), this)
 
         this._rebuildRows()
         this._updateDiff()
@@ -256,6 +252,9 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         if (diff.style)
             this._settings.set_string('color-scheme', profile.style)
 
+        if (diff.nightLight)
+            this._colorSettings.set_boolean('night-light-enabled', profile.nightLight)
+
         await Promise.all(this._monitors
             .filter(monitor => diff.external.has(monitor.edid))
             .map(async monitor => {
@@ -274,9 +273,37 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         return failures
     }
 
+    /**
+     * A switch row without hover that stays open when toggled, with a yellow
+     * dot and "saved: on/off" when it differs from the saved setup.
+     */
+    _addSwitch(label, onToggled) {
+        const item = new PopupMenu.PopupSwitchMenuItem(label, false)
+        const dot = new St.Widget({ style_class: 'ds-dot', y_align: Clutter.ActorAlign.CENTER, visible: false })
+        item.insert_child_at_index(dot, 0)
+        const saved = new St.Label({ style_class: 'ds-saved-label', y_align: Clutter.ActorAlign.CENTER, visible: false })
+        item.insert_child_above(saved, item.label)
+
+        item.track_hover = false
+        // Toggling would otherwise close the menu, as activating any item does
+        item.activate = () => item.toggle()
+        item.connect('toggled', (_item, state) => onToggled(state))
+        this.menu.addMenuItem(item)
+
+        return {
+            update(state, differs, savedState) {
+                item.setToggleState(state)
+                dot.visible = differs
+                saved.visible = differs
+                saved.text = savedState ? 'saved: on' : 'saved: off'
+            },
+        }
+    }
+
     _state() {
         return {
             style: this._settings.get_string('color-scheme') === DARK ? DARK : LIGHT,
+            nightLight: this._colorSettings.get_boolean('night-light-enabled'),
             builtin: this._builtin.available ? this._builtin.value : null,
             external: { ...this._external },
         }
@@ -351,10 +378,8 @@ class DisplaySettingsToggle extends QuickMenuToggle {
                 : null)
         }
 
-        this._darkItem.setToggleState(state.style === DARK)
-        this._darkDot.visible = this._diff.style
-        this._darkSaved.visible = this._diff.style
-        this._darkSaved.text = profile?.style === DARK ? 'saved: on' : 'saved: off'
+        this._darkItem.update(state.style === DARK, this._diff.style, profile?.style === DARK)
+        this._nightItem.update(state.nightLight, this._diff.nightLight, profile?.nightLight)
 
         const count = this._diff.count
         this._restoreButton.label = count > 0 ? `Restore (${count})` : 'Restore'
@@ -368,6 +393,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
     destroy() {
         this._builtin.disconnectObject(this)
         this._settings.disconnectObject(this)
+        this._colorSettings.disconnectObject(this)
         super.destroy()
     }
 })
