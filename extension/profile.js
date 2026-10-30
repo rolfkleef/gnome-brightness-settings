@@ -21,12 +21,12 @@ export function deskKey(edids) {
 }
 
 /**
- * Profile and state: `{style, nightLight, builtin, external: {edid: value}}`, with
+ * Profile and state: `{style, nightLight, keyboard, builtin, external: {edid: value}}`, with
  * `builtin` relative (0–1) or null. Only settings the profile holds count.
  */
 export function diffProfile(profile, state) {
     const diff = {
-        count: 0, builtin: false, style: false, nightLight: false, external: new Set(),
+        count: 0, builtin: false, style: false, nightLight: false, keyboard: false, external: new Set(),
         // Displays connected but not in the profile: nothing to restore, but worth saving
         unsaved: new Set(), builtinUnsaved: false,
         saveNeeded: true,
@@ -46,6 +46,12 @@ export function diffProfile(profile, state) {
     diff.nightLight = savedNightLight && profile.nightLight !== state.nightLight
     const nightLightUnsaved = !savedNightLight && state.nightLight !== undefined
 
+    // Keyboard backlight (0–100), null when the laptop has none
+    const savedKeyboard = profile.keyboard !== undefined && profile.keyboard !== null
+    const hasKeyboard = state.keyboard !== undefined && state.keyboard !== null
+    diff.keyboard = savedKeyboard && hasKeyboard && profile.keyboard !== state.keyboard
+    const keyboardUnsaved = !savedKeyboard && hasKeyboard
+
     for (const [edid, value] of Object.entries(state.external)) {
         if (!(edid in profile.external))
             diff.unsaved.add(edid)
@@ -53,8 +59,8 @@ export function diffProfile(profile, state) {
             diff.external.add(edid)
     }
 
-    diff.count = diff.style + diff.nightLight + diff.builtin + diff.external.size
-    diff.saveNeeded = diff.count > 0 || diff.unsaved.size > 0 || diff.builtinUnsaved || nightLightUnsaved
+    diff.count = diff.style + diff.nightLight + diff.keyboard + diff.builtin + diff.external.size
+    diff.saveNeeded = diff.count > 0 || diff.unsaved.size > 0 || diff.builtinUnsaved || nightLightUnsaved || keyboardUnsaved
 
     return diff
 }

@@ -1,11 +1,12 @@
 # Display Settings (GNOME Shell extension)
 
-A "Displays" tile in Quick Settings with brightness sliders for the built-in
-screen and external monitors (DDC/CI), Dark Style and Night Light switches, and per-desk
-save and restore. It replaces GNOME's own brightness slider, Dark Style and Night Light
-toggles while enabled.
+A "Brightness" tile in Quick Settings with brightness sliders for the built-in
+screen, external monitors (DDC/CI) and the keyboard backlight, Dark Style and
+Night Light switches, and per-desk save and restore. It replaces GNOME's own
+brightness slider, keyboard brightness, Dark Style and Night Light toggles while
+enabled.
 
-- **Save this setup** stores brightness of every display, the style and Night Light for the
+- **Save this setup** stores brightness of every display and the keyboard, the style and Night Light for the
   current desk (the set of connected external monitors). Enabled only when
   something differs from the saved setup.
 - Settings that differ from the saved setup show a yellow mark at the saved

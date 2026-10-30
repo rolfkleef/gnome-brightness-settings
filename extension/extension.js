@@ -17,7 +17,7 @@ import { DisplaySettingsIndicator } from './menu.js'
 const SETTLE_SECONDS = 5
 
 // GNOME's own controls, replaced by the tile while it is enabled
-const REPLACED_INDICATORS = ['_brightness', '_darkMode', '_nightLight']
+const REPLACED_INDICATORS = ['_brightness', '_darkMode', '_nightLight', '_backlight']
 
 export default class DisplaySettingsExtension extends Extension {
     enable() {

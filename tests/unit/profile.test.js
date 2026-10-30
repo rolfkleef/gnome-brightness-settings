@@ -50,6 +50,16 @@ assert(nightDiff.nightLight && nightDiff.count === 1, 'night light differs')
 const oldProfile = diffProfile(base, night({ nightLight: true }))
 assert(!oldProfile.nightLight && oldProfile.count === 0 && oldProfile.saveNeeded, 'old profile: not compared, save offered')
 
+// Keyboard backlight: compared exactly; not held by older profiles; null when absent
+const kb = changes => ({ ...state(changes), keyboard: changes.keyboard ?? 50 })
+const withKb = { ...base, keyboard: 50 }
+assert(!diffProfile(withKb, kb({})).keyboard, 'keyboard equal')
+const kbDiff = diffProfile(withKb, kb({ keyboard: 100 }))
+assert(kbDiff.keyboard && kbDiff.count === 1, 'keyboard differs')
+const kbOld = diffProfile(base, kb({ keyboard: 100 }))
+assert(!kbOld.keyboard && kbOld.count === 0 && kbOld.saveNeeded, 'old profile: keyboard not compared, save offered')
+assert(!diffProfile(withKb, { ...base, keyboard: null }).keyboard, 'no keyboard backlight now: not compared')
+
 assert(await loadProfile('missing') === null, 'missing profile is null')
 await saveProfile('k1', base)
 const loaded = await loadProfile('k1')

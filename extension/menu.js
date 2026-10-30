@@ -1,5 +1,5 @@
-// The "Displays" Quick Settings tile: brightness sliders for the
-// built-in and external displays, the dark style switch, and saving and
+// The "Brightness" Quick Settings tile: brightness sliders for the built-in
+// and external displays and the keyboard, dark style and night light, and saving and
 // restoring them per desk. Settings that differ from the saved desk setup
 // show a yellow mark at their saved value.
 
@@ -13,9 +13,10 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js'
 import { QuickMenuToggle, SystemIndicator } from 'resource:///org/gnome/shell/ui/quickSettings.js'
 import { Slider } from 'resource:///org/gnome/shell/ui/slider.js'
 
+import { Keyboard } from './keyboard.js'
 import { deskKey, diffProfile, loadProfile, saveProfile } from './profile.js'
 
-const TITLE = 'Displays'
+const TITLE = 'Brightness'
 const ICON = 'display-brightness-symbolic'
 const DARK = 'prefer-dark'
 const LIGHT = 'default'
@@ -122,10 +123,11 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._builtin = builtin
         this._settings = settings
         this._colorSettings = new Gio.Settings({ schema_id: 'org.gnome.settings-daemon.plugins.color' })
+        this._keyboard = new Keyboard()
 
         this._monitors = []      // [{edid, name, max}] answering DDC
         this._external = {}      // edid → raw brightness
-        this._rows = new Map()   // edid or 'builtin' → SliderRow
+        this._rows = new Map()   // edid, 'builtin' or 'keyboard' → SliderRow
         this._key = null
         this._profile = null
         this._diff = diffProfile(null, this._state())
@@ -160,6 +162,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         })
 
         this._builtin.connectObject('changed', () => this._onBuiltinChanged(), this)
+        this._keyboard.connectObject('changed', () => this._onKeyboardChanged(), this)
         this._settings.connectObject('changed::color-scheme', () => this._updateDiff(), this)
         this._colorSettings.connectObject('changed::night-light-enabled', () => this._updateDiff(), this)
 
@@ -252,6 +255,9 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         if (diff.style)
             this._settings.set_string('color-scheme', profile.style)
 
+        if (diff.keyboard)
+            this._keyboard.value = profile.keyboard
+
         if (diff.nightLight)
             this._colorSettings.set_boolean('night-light-enabled', profile.nightLight)
 
@@ -304,13 +310,14 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         return {
             style: this._settings.get_string('color-scheme') === DARK ? DARK : LIGHT,
             nightLight: this._colorSettings.get_boolean('night-light-enabled'),
+            keyboard: this._keyboard.value,
             builtin: this._builtin.available ? this._builtin.value : null,
             external: { ...this._external },
         }
     }
 
     _layout() {
-        return JSON.stringify([this._builtin.available, ...this._monitors.map(monitor => monitor.edid)])
+        return JSON.stringify([this._builtin.available, this._keyboard.available, ...this._monitors.map(monitor => monitor.edid)])
     }
 
     _updateRowValues() {
@@ -321,6 +328,8 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             if (!row.dragging)
                 row.value = this._external[monitor.edid] / monitor.max
         }
+        if (this._keyboard.available)
+            this._rows.get('keyboard').value = this._keyboard.value / 100
     }
 
     _rebuildRows() {
@@ -350,7 +359,27 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             this._slidersSection.addMenuItem(row)
         }
 
+        if (this._keyboard.available) {
+            const row = new SliderRow('Keyboard', value => {
+                // Snap to the backlight's levels
+                const level = this._keyboard.snap(value)
+                row.value = level / 100
+                this._keyboard.value = level
+            })
+            this._rows.set('keyboard', row)
+            this._slidersSection.addMenuItem(row)
+        }
+
         this._updateRowValues()
+    }
+
+    _onKeyboardChanged() {
+        if (this._keyboard.available !== this._rows.has('keyboard'))
+            this._rebuildRows()
+        else if (this._keyboard.available && !this._rows.get('keyboard').dragging)
+            this._rows.get('keyboard').value = this._keyboard.value / 100
+
+        this._updateDiff()
     }
 
     _onBuiltinChanged() {
@@ -370,6 +399,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
 
         this._rows.get('builtin')?.setSaved(this._diff.builtin ? profile.builtin : null)
         this._rows.get('builtin')?.setUnsaved(profile !== null && this._diff.builtinUnsaved)
+        this._rows.get('keyboard')?.setSaved(this._diff.keyboard ? profile.keyboard / 100 : null)
         for (const monitor of this._monitors)
             this._rows.get(monitor.edid).setUnsaved(this._diff.unsaved.has(monitor.edid))
         for (const monitor of this._monitors) {
@@ -394,6 +424,8 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._builtin.disconnectObject(this)
         this._settings.disconnectObject(this)
         this._colorSettings.disconnectObject(this)
+        this._keyboard.disconnectObject(this)
+        this._keyboard.destroy()
         super.destroy()
     }
 })
