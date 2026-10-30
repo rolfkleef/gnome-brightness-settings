@@ -30,3 +30,18 @@ Profiles live in `~/.config/display-settings/desk-<key>.json`.
   It has no built-in backlight, and its sliders control the real external monitors.
 - Changes to the extension load in the real session only after logging out and in (Wayland).
 - Design and plan: `docs/superpowers/`
+
+## Known issues / later
+- Disabling the extension while a refresh, save or restore is waiting on DDC or
+  file I/O lets it continue on destroyed widgets ("already disposed" warnings).
+  Fix: a destroyed flag checked after each `await` in `menu.js`.
+- A ddcutil `Detect` error other than ServiceUnknown, or a corrupt profile JSON,
+  leaves the tile showing stale values (only logged). Treat both like "no
+  ddcutil-service" / "no profile".
+- After disable, queued DDC writes log a TypeError on the cleared proxy, and
+  disabling before ddcutil-service connected logs a misleading "unavailable"
+  error. Stop the writers on destroy; ignore `CANCELLED` in `init()`.
+- The Restore button stays clickable while a restore runs, so a double click
+  restores twice. Make it insensitive during the restore.
+- `menu.js` and `extension.js` still log each restore (`[display-settings]
+  Restore …`), added for debugging; remove once restore is trusted.
