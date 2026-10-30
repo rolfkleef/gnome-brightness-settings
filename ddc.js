@@ -54,20 +54,26 @@ function displayName(model, serial) {
 }
 
 export class Ddc {
-    async init() {
+    constructor() {
+        this._proxy = null
         this._writers = new Map()
         this._cancellable = new Gio.Cancellable()
-        this.unavailable = false
+        this.unavailable = true
+    }
 
+    async init() {
         this._proxy = await new Promise((resolve, reject) => {
             DdcProxy(Gio.DBus.session, 'com.ddcutil.DdcutilService', '/com/ddcutil/DdcutilObject',
                 (proxy, error) => error ? reject(error) : resolve(proxy),
-                this._cancellable, Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION)
+                this._cancellable, Gio.DBusProxyFlags.NONE)
         })
     }
 
     /** Resolves to `[{edid, name}]`, or `[]` when ddcutil-service is missing. */
     async detect() {
+        if (!this._proxy)
+            return []
+
         let reply
 
         try {
