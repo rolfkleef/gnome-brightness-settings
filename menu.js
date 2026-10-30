@@ -27,6 +27,9 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
     _init(name, onChanged) {
         super._init({ activate: false, style_class: 'ds-row' })
 
+        this._unsavedDot = new St.Widget({ style_class: 'ds-dot', y_align: Clutter.ActorAlign.CENTER, visible: false })
+        this.add_child(this._unsavedDot)
+
         this.add_child(new St.Label({
             text: name,
             style_class: 'ds-name',
@@ -75,6 +78,11 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
         this._slider.value = fraction
         this._slider.unblock_signal_handler(this._changedId)
         this._updateLabel()
+    }
+
+    /** Marks a display the saved setup does not hold. */
+    setUnsaved(unsaved) {
+        this._unsavedDot.visible = unsaved
     }
 
     /** Shows the mark at `fraction`, or hides it with null. */
@@ -142,7 +150,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         const buttonsSection = new PopupMenu.PopupMenuSection()
         const buttons = new St.BoxLayout({ style_class: 'ds-buttons', x_expand: true })
         buttonsSection.actor.add_child(buttons)
-        this._saveButton = new St.Button({ label: 'Save desk setup', style_class: 'button ds-button', x_expand: true, can_focus: true })
+        this._saveButton = new St.Button({ label: 'Save this setup', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._restoreButton = new St.Button({ label: 'Restore', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._saveButton.connect('clicked', () => this.save().catch(error => logError(error, '[display-settings] Save failed')))
         this._restoreButton.connect('clicked', () => onRestore())
@@ -234,6 +242,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         const failures = []
         await this.refresh()
         const diff = this._diff
+        console.log(`[display-settings] Restore: builtin ${diff.builtin} (${this._builtin.value} → ${profile.builtin}), style ${diff.style}, external ${[...diff.external].length}`)
 
         // Saved monitors that are connected but not answering cannot be restored
         for (const monitor of this._detected ?? []) {
@@ -260,6 +269,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             }))
 
         await this.refresh()
+        console.log(`[display-settings] Restore done: builtin now ${this._builtin.value}, ${this._diff.count} still differ, failures: ${failures.join(', ') || 'none'}`)
 
         return failures
     }
@@ -288,6 +298,9 @@ class DisplaySettingsToggle extends QuickMenuToggle {
 
     _rebuildRows() {
         this._shownLayout = this._layout()
+        // The menu remembers its active item; clear it before the rows go away
+        for (const row of this._rows.values())
+            row.active = false
         this._slidersSection.removeAll()
         this._rows.clear()
 
@@ -329,6 +342,9 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._diff = diffProfile(profile, state)
 
         this._rows.get('builtin')?.setSaved(this._diff.builtin ? profile.builtin : null)
+        this._rows.get('builtin')?.setUnsaved(profile !== null && this._diff.builtinUnsaved)
+        for (const monitor of this._monitors)
+            this._rows.get(monitor.edid).setUnsaved(this._diff.unsaved.has(monitor.edid))
         for (const monitor of this._monitors) {
             this._rows.get(monitor.edid).setSaved(this._diff.external.has(monitor.edid)
                 ? profile.external[monitor.edid] / monitor.max
@@ -344,7 +360,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._restoreButton.label = count > 0 ? `Restore (${count})` : 'Restore'
         this._restoreButton.reactive = count > 0
         this._restoreButton[count > 0 ? 'add_style_class_name' : 'remove_style_class_name']('ds-restore-active')
-        this._saveButton.reactive = this._key !== null
+        this._saveButton.reactive = this._key !== null && this._diff.saveNeeded
 
         this.subtitle = count > 0 ? `${count} differ from saved` : null
     }

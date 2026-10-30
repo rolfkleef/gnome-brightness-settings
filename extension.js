@@ -109,6 +109,7 @@ export default class DisplaySettingsExtension extends Extension {
     }
 
     async _restore() {
+        console.log('[display-settings] Restore requested')
         let failures
 
         try {

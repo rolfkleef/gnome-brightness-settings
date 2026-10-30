@@ -25,7 +25,12 @@ export function deskKey(edids) {
  * `builtin` relative (0–1) or null. Only settings the profile holds count.
  */
 export function diffProfile(profile, state) {
-    const diff = { count: 0, builtin: false, style: false, external: new Set() }
+    const diff = {
+        count: 0, builtin: false, style: false, external: new Set(),
+        // Displays connected but not in the profile: nothing to restore, but worth saving
+        unsaved: new Set(), builtinUnsaved: false,
+        saveNeeded: true,
+    }
 
     if (!profile)
         return diff
@@ -34,12 +39,17 @@ export function diffProfile(profile, state) {
     diff.builtin = profile.builtin !== null && state.builtin !== null &&
         Math.abs(profile.builtin - state.builtin) > BUILTIN_TOLERANCE
 
+    diff.builtinUnsaved = profile.builtin === null && state.builtin !== null
+
     for (const [edid, value] of Object.entries(state.external)) {
-        if (edid in profile.external && profile.external[edid] !== value)
+        if (!(edid in profile.external))
+            diff.unsaved.add(edid)
+        else if (profile.external[edid] !== value)
             diff.external.add(edid)
     }
 
     diff.count = diff.style + diff.builtin + diff.external.size
+    diff.saveNeeded = diff.count > 0 || diff.unsaved.size > 0 || diff.builtinUnsaved
 
     return diff
 }

@@ -31,6 +31,16 @@ assert(diffProfile(base, state({ style: 'prefer-dark', builtin: 0.9, external: {
 assert(diffProfile(base, state({ external: { e2: 5 } })).count === 0, 'unsaved monitor ignored')
 assert(diffProfile({ ...base, builtin: null }, state({ builtin: 0.9 })).count === 0, 'unsaved builtin ignored')
 
+// Displays the profile does not hold are unsaved: not restorable, but worth saving
+const unsaved = diffProfile(base, state({ external: { e2: 5 } }))
+assert(unsaved.unsaved.has('e2') && !unsaved.unsaved.has('e1'), 'e2 unsaved')
+assert(unsaved.saveNeeded, 'unsaved display needs saving')
+const noBuiltin = diffProfile({ ...base, builtin: null }, state({ builtin: 0.9 }))
+assert(noBuiltin.builtinUnsaved && noBuiltin.saveNeeded, 'unsaved builtin needs saving')
+assert(!diffProfile(base, state({})).saveNeeded, 'equal state needs no saving')
+assert(diffProfile(null, base).saveNeeded, 'no profile needs saving')
+assert(diffProfile(base, state({ builtin: 0.9 })).saveNeeded, 'a difference needs saving')
+
 assert(await loadProfile('missing') === null, 'missing profile is null')
 await saveProfile('k1', base)
 const loaded = await loadProfile('k1')
