@@ -1,4 +1,4 @@
-// Display Settings: brightness for the built-in and external displays, dark
+// Brightness Settings: brightness for the built-in and external displays, dark
 // style, and per-desk save and restore, in one Quick Settings tile.
 
 import Gio from 'gi://Gio'
@@ -41,7 +41,7 @@ export default class DisplaySettingsExtension extends Extension {
                 if (this._ddc === ddc)
                     this._scheduleCheck()
             })
-            .catch(error => logError(error, '[display-settings] ddcutil-service unavailable'))
+            .catch(error => logError(error, '[brightness-settings] ddcutil-service unavailable'))
     }
 
     /**
@@ -86,7 +86,7 @@ export default class DisplaySettingsExtension extends Extension {
 
         this._checkId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, SETTLE_SECONDS, () => {
             this._checkId = 0
-            this._check().catch(error => logError(error, '[display-settings] Desk check failed'))
+            this._check().catch(error => logError(error, '[brightness-settings] Desk check failed'))
             return GLib.SOURCE_REMOVE
         })
     }
@@ -111,13 +111,13 @@ export default class DisplaySettingsExtension extends Extension {
     }
 
     async _restore() {
-        console.log('[display-settings] Restore requested')
+        console.log('[brightness-settings] Restore requested')
         let failures
 
         try {
             failures = await this._toggle.restore()
         } catch (error) {
-            logError(error, '[display-settings] Restore failed')
+            logError(error, '[brightness-settings] Restore failed')
             failures = ['all displays']
         }
 
@@ -127,7 +127,7 @@ export default class DisplaySettingsExtension extends Extension {
 
     _notify(title, body) {
         if (!this._source) {
-            this._source = new MessageTray.Source({ title: 'Display settings', iconName: 'display-brightness-symbolic' })
+            this._source = new MessageTray.Source({ title: 'Brightness settings', iconName: 'display-brightness-symbolic' })
             this._source.connect('destroy', () => {
                 this._source = null
             })

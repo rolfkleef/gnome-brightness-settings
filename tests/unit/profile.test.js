@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib'
 
-const tmp = GLib.dir_make_tmp('display-settings-XXXXXX')
+const tmp = GLib.dir_make_tmp('brightness-settings-XXXXXX')
 GLib.setenv('XDG_CONFIG_HOME', tmp, true)
 
 const { deskKey, diffProfile, loadProfile, saveProfile } = await import('../../extension/profile.js')
@@ -64,6 +64,6 @@ assert(await loadProfile('missing') === null, 'missing profile is null')
 await saveProfile('k1', base)
 const loaded = await loadProfile('k1')
 assert(JSON.stringify(loaded) === JSON.stringify(base), 'round trip')
-assert(GLib.file_test(`${tmp}/display-settings/desk-k1.json`, GLib.FileTest.EXISTS), 'stored under config dir')
+assert(GLib.file_test(`${tmp}/brightness-settings/desk-k1.json`, GLib.FileTest.EXISTS), 'stored under config dir')
 
 print('ok profile')

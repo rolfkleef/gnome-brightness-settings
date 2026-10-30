@@ -149,7 +149,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         buttonsSection.actor.add_child(buttons)
         this._saveButton = new St.Button({ label: 'Save this setup', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._restoreButton = new St.Button({ label: 'Restore', style_class: 'button ds-button', x_expand: true, can_focus: true })
-        this._saveButton.connect('clicked', () => this.save().catch(error => logError(error, '[display-settings] Save failed')))
+        this._saveButton.connect('clicked', () => this.save().catch(error => logError(error, '[brightness-settings] Save failed')))
         this._restoreButton.connect('clicked', () => onRestore())
         buttons.add_child(this._saveButton)
         buttons.add_child(this._restoreButton)
@@ -158,7 +158,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this.connect('clicked', () => this.menu.open())
         this.menu.connect('open-state-changed', (_menu, open) => {
             if (open)
-                this.refresh().catch(error => logError(error, '[display-settings] Refresh failed'))
+                this.refresh().catch(error => logError(error, '[brightness-settings] Refresh failed'))
         })
 
         this._builtin.connectObject('changed', () => this._onBuiltinChanged(), this)
@@ -241,7 +241,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         const failures = []
         await this.refresh()
         const diff = this._diff
-        console.log(`[display-settings] Restore: builtin ${diff.builtin} (${this._builtin.value} → ${profile.builtin}), style ${diff.style}, external ${[...diff.external].length}`)
+        console.log(`[brightness-settings] Restore: builtin ${diff.builtin} (${this._builtin.value} → ${profile.builtin}), style ${diff.style}, external ${[...diff.external].length}`)
 
         // Saved monitors that are connected but not answering cannot be restored
         for (const monitor of this._detected ?? []) {
@@ -274,7 +274,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             }))
 
         await this.refresh()
-        console.log(`[display-settings] Restore done: builtin now ${this._builtin.value}, ${this._diff.count} still differ, failures: ${failures.join(', ') || 'none'}`)
+        console.log(`[brightness-settings] Restore done: builtin now ${this._builtin.value}, ${this._diff.count} still differ, failures: ${failures.join(', ') || 'none'}`)
 
         return failures
     }

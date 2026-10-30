@@ -67,7 +67,7 @@ export function diffProfile(profile, state) {
 
 function profileFile(key) {
     return Gio.File.new_for_path(GLib.build_filenamev([
-        GLib.get_user_config_dir(), 'display-settings', `desk-${key}.json`]))
+        GLib.get_user_config_dir(), 'brightness-settings', `desk-${key}.json`]))
 }
 
 export async function loadProfile(key) {

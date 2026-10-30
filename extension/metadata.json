@@ -1,10 +1,10 @@
 {
-  "uuid": "display-settings@drostan.org",
-  "name": "Display Settings",
-  "description": "Brightness for the built-in and external displays, dark style, and per-desk save and restore.",
+  "uuid": "brightness-settings@drostan.org",
+  "name": "Brightness Settings",
+  "description": "Brightness for the built-in and external displays and the keyboard, dark style and night light, with per-desk save and restore.",
   "shell-version": [
     "50"
   ],
   "version": 1,
-  "url": "https://github.com/rolfkleef/gnome-display-settings"
+  "url": "https://github.com/rolfkleef/gnome-brightness-settings"
 }

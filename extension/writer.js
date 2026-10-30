@@ -33,7 +33,7 @@ export class CoalescingWriter {
                 await this._writeFn(value)
             } catch (error) {
                 this._lastWritten = null
-                logError(error, '[display-settings] Write failed')
+                logError(error, '[brightness-settings] Write failed')
             }
         }
 

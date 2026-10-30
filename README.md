@@ -1,4 +1,4 @@
-# Display Settings (GNOME Shell extension)
+# Brightness Settings (GNOME Shell extension)
 
 A "Brightness" tile in Quick Settings with brightness sliders for the built-in
 screen, external monitors (DDC/CI) and the keyboard backlight, Dark Style and
@@ -16,14 +16,14 @@ enabled.
   unplugged and the new desk's saved setup differs, a "Restore display
   settings?" notification offers the same.
 
-Profiles live in `~/.config/display-settings/desk-<key>.json`.
+Profiles live in `~/.config/brightness-settings/desk-<key>.json`.
 
 ## Requirements
 - GNOME Shell 50
 - [ddcutil-service](https://github.com/digitaltrails/ddcutil-service) for external monitors
 
 ## Setup
-`./install.sh`, log out and in, then `gnome-extensions enable display-settings@drostan.org`
+`./install.sh`, log out and in, then `gnome-extensions enable brightness-settings@drostan.org`
 
 ## Development
 - `tests/run.sh` runs the unit tests (desk key, profile diff and storage, write coalescing)
@@ -44,7 +44,7 @@ Profiles live in `~/.config/display-settings/desk-<key>.json`.
   error. Stop the writers on destroy; ignore `CANCELLED` in `init()`.
 - The Restore button stays clickable while a restore runs, so a double click
   restores twice. Make it insensitive during the restore.
-- `menu.js` and `extension.js` still log each restore (`[display-settings]
+- `menu.js` and `extension.js` still log each restore (`[brightness-settings]
   Restore …`), added for debugging; remove once restore is trusted.
 
 ## License

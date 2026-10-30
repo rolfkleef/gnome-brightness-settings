@@ -26,7 +26,7 @@ export class Keyboard extends Signals.EventEmitter {
             (proxy, error) => {
                 if (error) {
                     if (!error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                        logError(error, '[display-settings] No keyboard backlight service')
+                        logError(error, '[brightness-settings] No keyboard backlight service')
                     return
                 }
 
