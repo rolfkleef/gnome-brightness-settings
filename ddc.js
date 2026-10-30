@@ -109,8 +109,8 @@ export class Ddc {
         }
     }
 
-    set(edid, value) {
-        this._writer(edid).set(value)
+    set(edid, value, options) {
+        this._writer(edid).set(value, options)
     }
 
     /** Resolves once the writes queued for this monitor have finished. */

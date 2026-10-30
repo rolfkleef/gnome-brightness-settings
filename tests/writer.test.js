@@ -46,4 +46,14 @@ await failing.idle()
 failing.set(2)
 await failing.idle()
 
+// Restore writes even a value equal to the last one written, since the
+// monitor may have been changed with its own buttons since
+const forced = []
+const restoring = new CoalescingWriter(value => { forced.push(value); return Promise.resolve() })
+restoring.set(50)
+await restoring.idle()
+restoring.set(50, { force: true })
+await restoring.idle()
+assert(JSON.stringify(forced) === '[50,50]', `forced write repeats, got ${forced}`)
+
 print('ok writer')

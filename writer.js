@@ -9,8 +9,9 @@ export class CoalescingWriter {
         this._draining = null
     }
 
-    set(value) {
-        if (value === this._lastWritten && this._pending === null)
+    /** With `force`, writes even a value equal to the last one written. */
+    set(value, { force = false } = {}) {
+        if (!force && value === this._lastWritten && this._pending === null)
             return
 
         this._pending = value

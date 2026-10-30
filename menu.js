@@ -60,6 +60,14 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
             onChanged(this._slider.value)
         })
         this._savedFraction = null
+
+        this._dragging = false
+        this._slider.connect('drag-begin', () => { this._dragging = true })
+        this._slider.connect('drag-end', () => { this._dragging = false })
+    }
+
+    get dragging() {
+        return this._dragging
     }
 
     set value(fraction) {
@@ -98,7 +106,7 @@ class SliderRow extends PopupMenu.PopupBaseMenuItem {
 
 export const DisplaySettingsToggle = GObject.registerClass(
 class DisplaySettingsToggle extends QuickMenuToggle {
-    _init(ddc, builtin, settings) {
+    _init(ddc, builtin, settings, onRestore) {
         super._init({ title: TITLE, iconName: ICON, toggleMode: false })
 
         this._ddc = ddc
@@ -137,7 +145,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         this._saveButton = new St.Button({ label: 'Save desk setup', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._restoreButton = new St.Button({ label: 'Restore', style_class: 'button ds-button', x_expand: true, can_focus: true })
         this._saveButton.connect('clicked', () => this.save().catch(error => logError(error, '[display-settings] Save failed')))
-        this._restoreButton.connect('clicked', () => this.restore().catch(error => logError(error, '[display-settings] Restore failed')))
+        this._restoreButton.connect('clicked', () => onRestore())
         buttons.add_child(this._saveButton)
         buttons.add_child(this._restoreButton)
         this.menu.addMenuItem(buttonsSection)
@@ -166,24 +174,43 @@ class DisplaySettingsToggle extends QuickMenuToggle {
     /**
      * Reads every display and the saved profile for the current desk.
      */
-    async refresh() {
+    refresh() {
+        // Each refresh starts after the previous one, so results never apply out of order
+        this._refreshing = (this._refreshing ?? Promise.resolve())
+            .catch(() => {})
+            .then(() => this._refresh())
+
+        return this._refreshing
+    }
+
+    async _refresh() {
         const detected = await this._ddc.detect()
         const readings = await Promise.all(detected.map(monitor => this._ddc.get(monitor.edid)))
 
+        this._detected = detected
         this._monitors = []
+        const previous = this._external
         this._external = {}
         detected.forEach((monitor, i) => {
-            if (readings[i]) {
-                this._monitors.push({ ...monitor, max: readings[i].max })
-                this._external[monitor.edid] = readings[i].value
-            }
+            if (!readings[i])
+                return
+
+            this._monitors.push({ ...monitor, max: readings[i].max })
+            // A slider dragged while reading keeps its own value
+            this._external[monitor.edid] = this._rows.get(monitor.edid)?.dragging
+                ? previous[monitor.edid]
+                : readings[i].value
         })
 
         // Without ddcutil-service the desk is unknown, so nothing is saved or restored
         this._key = this._ddc.unavailable ? null : deskKey(detected.map(monitor => monitor.edid))
         this._profile = this._key ? await loadProfile(this._key) : null
 
-        this._rebuildRows()
+        const layout = this._layout()
+        if (layout !== this._shownLayout)
+            this._rebuildRows()
+        else
+            this._updateRowValues()
         this._updateDiff()
     }
 
@@ -205,7 +232,14 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             return []
 
         const failures = []
+        await this.refresh()
         const diff = this._diff
+
+        // Saved monitors that are connected but not answering cannot be restored
+        for (const monitor of this._detected ?? []) {
+            if (monitor.edid in profile.external && !(monitor.edid in this._external))
+                failures.push(monitor.name)
+        }
 
         if (diff.builtin)
             this._builtin.value = profile.builtin
@@ -217,7 +251,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             .filter(monitor => diff.external.has(monitor.edid))
             .map(async monitor => {
                 const target = profile.external[monitor.edid]
-                this._ddc.set(monitor.edid, target)
+                this._ddc.set(monitor.edid, target, { force: true })
                 await this._ddc.idle(monitor.edid)
 
                 const reading = await this._ddc.get(monitor.edid)
@@ -238,7 +272,22 @@ class DisplaySettingsToggle extends QuickMenuToggle {
         }
     }
 
+    _layout() {
+        return JSON.stringify([this._builtin.available, ...this._monitors.map(monitor => monitor.edid)])
+    }
+
+    _updateRowValues() {
+        if (this._builtin.available)
+            this._rows.get('builtin').value = this._builtin.value
+        for (const monitor of this._monitors) {
+            const row = this._rows.get(monitor.edid)
+            if (!row.dragging)
+                row.value = this._external[monitor.edid] / monitor.max
+        }
+    }
+
     _rebuildRows() {
+        this._shownLayout = this._layout()
         this._slidersSection.removeAll()
         this._rows.clear()
 
@@ -261,10 +310,7 @@ class DisplaySettingsToggle extends QuickMenuToggle {
             this._slidersSection.addMenuItem(row)
         }
 
-        if (this._builtin.available)
-            this._rows.get('builtin').value = this._builtin.value
-        for (const monitor of this._monitors)
-            this._rows.get(monitor.edid).value = this._external[monitor.edid] / monitor.max
+        this._updateRowValues()
     }
 
     _onBuiltinChanged() {
@@ -312,10 +358,10 @@ class DisplaySettingsToggle extends QuickMenuToggle {
 
 export const DisplaySettingsIndicator = GObject.registerClass(
 class DisplaySettingsIndicator extends SystemIndicator {
-    _init(ddc, builtin, settings) {
+    _init(ddc, builtin, settings, onRestore) {
         super._init()
 
-        this.toggle = new DisplaySettingsToggle(ddc, builtin, settings)
+        this.toggle = new DisplaySettingsToggle(ddc, builtin, settings, onRestore)
         this.quickSettingsItems.push(this.toggle)
     }
 

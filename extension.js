@@ -24,7 +24,8 @@ export default class DisplaySettingsExtension extends Extension {
         this._settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' })
         this._ddc = new Ddc()
         this._builtin = new Builtin()
-        this._indicator = new DisplaySettingsIndicator(this._ddc, this._builtin, this._settings)
+        this._indicator = new DisplaySettingsIndicator(this._ddc, this._builtin, this._settings,
+            () => this._restore())
         this._toggle = this._indicator.toggle
         this._hidden = []
 
@@ -108,7 +109,14 @@ export default class DisplaySettingsExtension extends Extension {
     }
 
     async _restore() {
-        const failures = await this._toggle.restore()
+        let failures
+
+        try {
+            failures = await this._toggle.restore()
+        } catch (error) {
+            logError(error, '[display-settings] Restore failed')
+            failures = ['all displays']
+        }
 
         if (failures.length > 0)
             this._notify('Some displays were not restored', failures.join(', '))
