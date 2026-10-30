@@ -106,6 +106,8 @@ export default class DisplaySettingsExtension extends Extension {
         this._notification = this._notify('Restore display settings?',
             `${toggle.differences} differ from the saved desk setup.`)
         this._notification.addAction('Restore', () => this._restore())
+        // Clicking the notification itself restores too, not only the button
+        this._notification.connect('activated', () => this._restore())
     }
 
     async _restore() {
